@@ -1,0 +1,18 @@
+#!/bin/sh
+
+USER=${USER:-$(whoami)}
+PASSWORD=${PASSWORD:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)}
+
+echo -e "\e[1m$(date +'%F %T')\t$(readlink -f ${0})\e[0m"
+
+echo "${USER}:${PASSWORD}" | chpasswd
+
+PWD="${HOME}/.ssh"
+mkdir -pv ${PWD}
+cd ${PWD}
+
+chmod -Rv 644 ${PWD}
+mkdir -pv /var/run/sshd
+$(which sshd) -d
+
+exit ${?}
