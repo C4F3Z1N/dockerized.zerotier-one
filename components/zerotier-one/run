@@ -1,7 +1,0 @@
-#!/bin/sh
-
-echo -e "\e[1m$(date +'%F %T')\t$(readlink -f ${0})\e[0m"
-
-zerotier-one
-
-exit ${?}

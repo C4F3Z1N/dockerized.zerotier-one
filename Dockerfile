@@ -1,18 +1,22 @@
-ARG TAG="3.11"
-FROM alpine:${TAG}
+ARG TAG="buster-slim"
+FROM debian:${TAG}
 
-RUN apk add -fU --no-cache \
-		openssh \
-		runit \
-		tini \
-		zerotier-one
+ARG DEBIAN_FRONTEND="noninteractive"
 
-ARG PWD="/opt/components"
-WORKDIR ${PWD}
-ADD components .
-RUN chmod -v a+x $(find . -name "run" 2> /dev/null)
+ARG UPDATE_CMD="apt-get update --fix-missing"
+ARG INSTALL_CMD="apt-get install -fy --no-install-recommends"
 
-ENTRYPOINT ["tini", "--"]
-CMD ["runsvdir", "."]
+VOLUME /var/cache
 
-RUN ssh-keygen -A
+RUN ${UPDATE_CMD} && ${INSTALL_CMD} \
+		gnupg2 \
+		wget
+
+RUN echo "deb http://download.zerotier.com/debian/stretch stretch main" \
+		> /etc/apt/sources.list.d/zerotier.list && \
+	wget --no-check-certificate -qO - \
+		"https://github.com/zerotier/ZeroTierOne/raw/master/doc/contact%40zerotier.com.gpg" \
+		| apt-key add - && \
+	${UPDATE_CMD} && ${INSTALL_CMD} zerotier-one
+
+ENTRYPOINT ["zerotier-one"]
