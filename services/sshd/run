@@ -1,0 +1,20 @@
+#!/bin/sh -e
+
+cd $(readlink -f ${0} | xargs dirname)
+
+CONFIG=$(mktemp -u)
+envsubst < ./template.config > ${CONFIG}
+
+while IFS= read -r LINE; do
+	KEY=$(echo ${LINE} | awk '{print $1}')
+	sed -i "s%.*${KEY}.*%${LINE}%" /etc/ssh/sshd_config
+done < ${CONFIG}
+
+ssh-keygen -A
+
+if [ ! -d ~/.ssh ]; then
+	ln -fsv ${PWD}/$(whoami) ~/.ssh
+	readlink ~/.ssh | xargs mkdir -pv
+fi
+
+exec $(which sshd) -D -e
